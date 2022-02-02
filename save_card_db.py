@@ -63,7 +63,7 @@ train_ds = tf.keras.utils.image_dataset_from_directory(
     data_dir,
     validation_split = 0.2,
     subset = "training",
-    seed = 123,
+    seed = 123, # Could be worth to wait for shuffling until the datset is going to be used
     image_size = (img_height, img_width),
     batch_size = batch_size
 )
@@ -71,7 +71,7 @@ train_ds = tf.keras.utils.image_dataset_from_directory(
 # This created BatchDataset  object is for the validation images
 val_ds = tf.keras.utils.image_dataset_from_directory(
     data_dir,
-    validation_split = 0.2,
+    validation_split = 0.2, # Might want to try setting a training, validation, and separate testing
     subset = "validation",
     seed = 123,
     image_size = (img_height, img_width),
