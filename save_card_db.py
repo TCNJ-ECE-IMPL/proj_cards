@@ -1,55 +1,137 @@
+# Use this script whenever you need to save the cards to a new directory as a tfds object.
+
 import os
 import time
 import argparse
 import itertools
+import sys
 from datetime import date
 from itertools import cycle
-
+import PIL
+import PIL
+import pathlib
 import scipy.io as Mat
 import numpy as np
 import matplotlib.pyplot as plt
 import random, sklearn
 import cv2
+import tensorflow as tf
+
+print("Tensorflow version is: ", tf.__version__)
+
+data_dir = pathlib.Path(r'/home/pearlstl/cards/source/as_images') # directory the images are in
+
+# Data parameters
+batch_size = 32
+img_height = 256 # I have no idea what the images' dimensions are
+img_width = 256 # but I found these H and W in another file so I hope that's what they represent
+
+# Area for downloading the image dataset into an object.
+card_dataset = tf.keras.utils.image_dataset_from_directory(
+    directory=data_dir,
+    image_size = (img_height, img_width),
+    batch_size = batch_size,
+    seed=123
+)
+class_names = card_dataset.class_names
+
+# Saves the images into a tfds object for use in other scripts
+tfds_card_path = r'/home/woodsj9/cards/cards_tfds'
+tf.data.experimental.save(
+    dataset=card_dataset,
+    path=tfds_card_path
+)
+
+'''Tests that the data will load
+load_test = tf.data.experimental.load(
+    path = tfds_card_path
+)
+
+A visual test with the images to make sure it still works
+plt.figure(figsize=(10,10))
+for images, labels in load_test.take(1):
+    for i in range(9):
+        ax = plt.subplot(3, 3, i + 1)
+        plt.imshow(images[i].numpy().astype('uint8'))
+        plt.title(class_names[labels[i]])
+        plt.axis('off')
+plt.show()
+'''
+
+'''# Creates a BatchDataset object from a directory of images. This is for the training images.
+train_ds = tf.keras.utils.image_dataset_from_directory(
+    data_dir,
+    validation_split = 0.2,
+    subset = "training",
+    seed = 123,
+    image_size = (img_height, img_width),
+    batch_size = batch_size
+)
+
+# This created BatchDataset  object is for the validation images
+val_ds = tf.keras.utils.image_dataset_from_directory(
+    data_dir,
+    validation_split = 0.2,
+    subset = "validation",
+    seed = 123,
+    image_size = (img_height, img_width),
+    batch_size = batch_size
+)
+
+class_names = train_ds.class_names
+#print("Class names are :", class_names)
+
+# Plot to show the images properly loaded into the object.
+plt.figure(figsize=(10,10))
+for images, labels in train_ds.take(1):
+    for i in range(9):
+        ax = plt.subplot(3, 3, i + 1)
+        plt.imshow(images[i].numpy().astype('uint8'))
+        plt.title(class_names[labels[i]])
+        plt.axis('off')
+plt.show()
+
+plt.figure(figsize=(10,10))
+for images, labels in val_ds.take(1):
+    for i in range(9):
+        ax = plt.subplot(3, 3, i + 1)
+        plt.imshow(images[i].numpy().astype('uint8'))
+        plt.title(class_names[labels[i]])
+        plt.axis('off')
+plt.show()
 
 
-(H , W) = 1080, 1980
-# Blank image with RGBA = (0, 0, 0, 0)
-composite = np.zeros((H, W, 3), np.uint8)
+# Preparing the data for the model
+AUTOTUNE = tf.data.AUTOTUNE
+train_ds = train_ds.cache().prefetch(buffer_size=AUTOTUNE)
+val_ds = val_ds.cache().prefetch(buffer_size=AUTOTUNE)
 
-idx = 0     # index into data array
-for i in range(1000):
-    for suit in ('s', 'h', 'd', 'c'):
-        val = random.randint(1, 13)
-        deg = random.randint(0,359)
+num_classes = 13
 
-        if val >= 2 and val <= 10:
-            val_char = "%d" % val
-        elif val == 1:
-            val_char = "a"
-        elif val == 11:
-            val_char = "j"
-        elif val == 12:
-            val_char = "q"
-        elif val == 13:
-            val_char = "k"
+# Creates the model for the dataset
+model = tf.keras.Sequential([
+    tf.keras.layers.Rescaling(1./255),
+    tf.keras.layers.Conv2D(32, 3, activation = 'relu'),
+    tf.keras.layers.MaxPooling2D(),
+    tf.keras.layers.Conv2D(32, 3, activation = 'relu'),
+    tf.keras.layers.MaxPooling2D(),
+    tf.keras.layers.Conv2D(32, 3, activation = 'relu'),
+    tf.keras.layers.MaxPooling2D(),
+    tf.keras.layers.Flatten(),
+    tf.keras.layers.Dense(128, activation = 'relu'),
+    tf.keras.layers.Dense(num_classes)
+])
 
-        filepath = "/home/pearlstl/cards/source/as_images/cardval_%s/card_%s_%s_%03d_deg.png" % (val_char, suit, val_char, deg)
-        s_img = cv2.imread(filepath, cv2.IMREAD_UNCHANGED);
+# Runs the model
+model.compile(
+    optimizer='adam',
+    loss=tf.losses.SparseCategoricalCrossentropy(from_logits=True),
+    metrics=['accuracy']
+)
 
-        x_offset = np.int32(random.random()*(W-257))
-        y_offset = np.int32(random.random()*(H-257))
-        y1, y2 = y_offset, y_offset + s_img.shape[0]
-        x1, x2 = x_offset, x_offset + s_img.shape[1]
-
-        alpha_s = s_img[:, :, 3] / 255.0
-        alpha_l = 1.0 - alpha_s
-
-        for c in range(0, 3):
-            composite[y1:y2, x1:x2, c] = (alpha_s * s_img[:, :, c] +
-                                      alpha_l * composite[y1:y2, x1:x2, c])
-        idx = idx + 1
-
-
-tf.data.Dataset.from_tensor_slices(train_x)
-
-cv2.imwrite("outfile.png", composite)
+# Tests the model
+model.fit(
+    train_ds,
+    validation_data=val_ds,
+    epochs=3
+)'''
