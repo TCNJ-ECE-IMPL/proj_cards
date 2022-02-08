@@ -25,8 +25,8 @@ data_dir = pathlib.Path(r'/home/pearlstl/cards/source/as_images') # directory th
 batch_size = 32
 img_height = 256 # I have no idea what the images' dimensions are
 img_width = 256 # but I found these H and W in another file so I hope that's what they represent
-
-# Area for downloading the image dataset into an object.
+'''
+# Area for downloading the whole image dataset into an object.
 card_dataset = tf.keras.utils.image_dataset_from_directory(
     directory=data_dir,
     image_size = (img_height, img_width),
@@ -34,7 +34,8 @@ card_dataset = tf.keras.utils.image_dataset_from_directory(
     seed=123
 )
 class_names = card_dataset.class_names
-
+'''
+'''
 # Saves the images into a tfds object for use in other scripts
 tfds_card_path = r'/home/woodsj9/cards/cards_tfds'
 tf.data.experimental.save(
@@ -42,7 +43,7 @@ tf.data.experimental.save(
     path=tfds_card_path
 )
 
-'''Tests that the data will load
+# Tests that the data will load
 load_test = tf.data.experimental.load(
     path = tfds_card_path
 )
@@ -58,7 +59,7 @@ for images, labels in load_test.take(1):
 plt.show()
 '''
 
-'''# Creates a BatchDataset object from a directory of images. This is for the training images.
+# Creates a BatchDataset object from a directory of images. This is for the training images.
 train_ds = tf.keras.utils.image_dataset_from_directory(
     data_dir,
     validation_split = 0.2,
@@ -134,4 +135,4 @@ model.fit(
     train_ds,
     validation_data=val_ds,
     epochs=3
-)'''
+)
