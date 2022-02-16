@@ -80,26 +80,26 @@ val_ds = tf.keras.utils.image_dataset_from_directory(
 )
 
 class_names = train_ds.class_names
-#print("Class names are :", class_names)
+print("Class names are :", class_names)
 
 # Plot to show the images properly loaded into the object.
-plt.figure(figsize=(10,10))
-for images, labels in train_ds.take(1):
-    for i in range(9):
-        ax = plt.subplot(3, 3, i + 1)
-        plt.imshow(images[i].numpy().astype('uint8'))
-        plt.title(class_names[labels[i]])
-        plt.axis('off')
-plt.show()
+# plt.figure(figsize=(10,10))
+# for images, labels in train_ds.take(1):
+#     for i in range(9):
+#         ax = plt.subplot(3, 3, i + 1)
+#         plt.imshow(images[i].numpy().astype('uint8'))
+#         plt.title(class_names[labels[i]])
+#         plt.axis('off')
+# plt.show()
 
-plt.figure(figsize=(10,10))
-for images, labels in val_ds.take(1):
-    for i in range(9):
-        ax = plt.subplot(3, 3, i + 1)
-        plt.imshow(images[i].numpy().astype('uint8'))
-        plt.title(class_names[labels[i]])
-        plt.axis('off')
-plt.show()
+# plt.figure(figsize=(10,10))
+# for images, labels in val_ds.take(1):
+#     for i in range(9):
+#         ax = plt.subplot(3, 3, i + 1)
+#         plt.imshow(images[i].numpy().astype('uint8'))
+#         plt.title(class_names[labels[i]])
+#         plt.axis('off')
+# plt.show()
 
 
 # Preparing the data for the model
@@ -122,6 +122,8 @@ model = tf.keras.Sequential([
     tf.keras.layers.Dense(128, activation = 'relu'),
     tf.keras.layers.Dense(num_classes)
 ])
+model.build((32,256,256, 3))
+model.summary()
 
 # Runs the model
 model.compile(
@@ -134,5 +136,6 @@ model.compile(
 model.fit(
     train_ds,
     validation_data=val_ds,
-    epochs=3
+    epochs=2,
+    verbose=2
 )
