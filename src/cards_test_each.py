@@ -32,7 +32,6 @@ batch_size = 32
 img_height = 256 # I have no idea what the images' dimensions are
 img_width = 256 # but I found these H and W in another file so I hope that's what they represent
 
-# This created BatchDataset  object is for the validation images
 full_ds = image_dataset_from_directory(
     data_dir,
     shuffle = False,
