@@ -30,7 +30,8 @@ data_dir = pathlib.Path(r'/home/pearlstl/cards/source/as_images') # directory th
 # Data parameters
 batch_size = 32
 img_height = 256 # I have no idea what the images' dimensions are
-img_width = 256 # but I found these H and W in another file so I hope that's what they represent
+img_width  = 256 # but I found these H and W in another file so I hope that's what they represent
+EPOCHS     = 5
 
 # Creates a BatchDataset object from a directory of images. This is for the training images.
 train_ds = image_dataset_from_directory(
@@ -103,7 +104,7 @@ checkpoint_callback = ModelCheckpoint(
 model.fit(
     train_ds,
     validation_data=val_ds,
-    epochs=1,
+    epochs=EPOCHS,
     callbacks=[checkpoint_callback],
     verbose=2
 )
