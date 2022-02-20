@@ -17,10 +17,11 @@ import random, sklearn
 import cv2
 import tensorflow as tf
 from tensorflow.keras.preprocessing import image_dataset_from_directory
+from tensorflow.keras.models import save_model, load_model, model_from_json
 from tf_explain.core.activations import ExtractActivations
 
-os.environ["CUDA_VISIBLE_DEVICES"] = '0'
-#os.environ["CUDA_VISIBLE_DEVICES"] = '-1'
+#os.environ["CUDA_VISIBLE_DEVICES"] = '0'
+os.environ["CUDA_VISIBLE_DEVICES"] = '-1'
 
 print("Tensorflow version is: ", tf.__version__)
 
@@ -30,109 +31,32 @@ data_dir = pathlib.Path(r'/home/pearlstl/cards/source/as_images') # directory th
 batch_size = 32
 img_height = 256 # I have no idea what the images' dimensions are
 img_width = 256 # but I found these H and W in another file so I hope that's what they represent
-'''
-# Area for downloading the whole image dataset into an object.
-card_dataset = tf.keras.utils.image_dataset_from_directory(
-    directory=data_dir,
-    image_size = (img_height, img_width),
-    batch_size = batch_size,
-    seed=123
-)
-class_names = card_dataset.class_names
-'''
-'''
-# Saves the images into a tfds object for use in other scripts
-tfds_card_path = r'/home/woodsj9/cards/cards_tfds'
-tf.data.experimental.save(
-    dataset=card_dataset,
-    path=tfds_card_path
-)
 
-# Tests that the data will load
-load_test = tf.data.experimental.load(
-    path = tfds_card_path
-)
-
-A visual test with the images to make sure it still works
-plt.figure(figsize=(10,10))
-for images, labels in load_test.take(1):
-    for i in range(9):
-        ax = plt.subplot(3, 3, i + 1)
-        plt.imshow(images[i].numpy().astype('uint8'))
-        plt.title(class_names[labels[i]])
-        plt.axis('off')
-plt.show()
-'''
-
-# Creates a BatchDataset object from a directory of images. This is for the training images.
-train_ds = image_dataset_from_directory(
-    data_dir,
-    validation_split = 0.2,
-    subset = "training",
-    seed = 123, # Could be worth to wait for shuffling until the datset is going to be used
-    image_size = (img_height, img_width),
-    batch_size = batch_size
-)
-
-# This created BatchDataset  object is for the validation images
-val_ds = image_dataset_from_directory(
+full_ds = image_dataset_from_directory(
     data_dir,
     shuffle = False,
     image_size = (img_height, img_width),
     batch_size = batch_size
 )
 
-# for element in val_ds:
-#     print(type(element[0].numpy()))
-#     print(type(element[1].numpy()))
-
-class_names = train_ds.class_names
+class_names = full_ds.class_names
 print("Class names are :", class_names)
-
-# Plot to show the images properly loaded into the object.
-# plt.figure(figsize=(10,10))
-# for images, labels in train_ds.take(1):
-#     for i in range(9):
-#         ax = plt.subplot(3, 3, i + 1)
-#         plt.imshow(images[i].numpy().astype('uint8'))
-#         plt.title(class_names[labels[i]])
-#         plt.axis('off')
-# plt.show()
-
-# plt.figure(figsize=(10,10))
-# for images, labels in val_ds.take(1):
-#     for i in range(9):
-#         ax = plt.subplot(3, 3, i + 1)
-#         plt.imshow(images[i].numpy().astype('uint8'))
-#         plt.title(class_names[labels[i]])
-#         plt.axis('off')
-# plt.show()
-
-# Preparing the data for the model
-#AUTOTUNE = tf.data.AUTOTUNE
-#train_ds = train_ds.prefetch(buffer_size=AUTOTUNE).cache()
-#val_ds = val_ds.prefetch(buffer_size=AUTOTUNE).cache()
 
 num_classes = 13
 
-# Creates the model for the dataset
-model = tf.keras.Sequential([
-    tf.keras.layers.Rescaling(1./255),
-    tf.keras.layers.Conv2D(32, 3, activation = 'relu'),
-    tf.keras.layers.MaxPooling2D(),
-    tf.keras.layers.Conv2D(32, 3, activation = 'relu'),
-    tf.keras.layers.MaxPooling2D(),
-    tf.keras.layers.Conv2D(32, 3, activation = 'relu'),
-    tf.keras.layers.MaxPooling2D(),
-    tf.keras.layers.Conv2D(32, 3, activation = 'relu'),
-    tf.keras.layers.MaxPooling2D(),
-    tf.keras.layers.Conv2D(32, 3, activation = 'relu',name="blah"),
-    tf.keras.layers.MaxPooling2D(),
-    tf.keras.layers.Flatten(),
-    tf.keras.layers.Dense(128, activation = 'relu'),
-    tf.keras.layers.Dense(num_classes, activation=tf.keras.activations.softmax)
-])
-model.build((32,256,256, 3))
+# load dcnn model
+model_name = 'model.json'
+json_file = open(model_name, 'r')
+model_json = json_file.read()
+json_file.close()
+model = model_from_json(model_json)
+print("Model loaded...")
+
+# feed any set of trained weights to model
+best_wgt_path = 'weights.h5'
+model.load_weights(best_wgt_path)
+print("Weights loaded onto model...")
+
 model.summary()
 
 # Runs the model
@@ -142,21 +66,13 @@ model.compile(
     metrics=['accuracy']
 )
 
-# Train the model
-model.fit(
-    train_ds,
-    validation_data=train_ds,
-    epochs=1,
-    verbose=2
-)
-
 the_img_arr = np.zeros((1,img_height,img_width,3))          # create a dummy 4D array as a container, with batch size of 1,
                                                             # to match Keras input layer requirement
 the_lbl_arr = np.zeros(1)                                   # create a dummy 1-element numpy array for labels, to match Keras input layer requirement
 
 batch_idx = 0
 # Pulls out one batch at a time from the dataset
-for batch in val_ds:
+for batch in full_ds:
     # Pulls out one image at a time from the batch
     for idx in range (len(batch[1].numpy())):
 
@@ -167,19 +83,11 @@ for batch in val_ds:
         the_lbl = batch[1].numpy()[idx]                     # get the label from the batch
         the_lbl_arr[0] = the_lbl_arr                        # put the label into a container, batch size of 1
 
-        layer_name   = 'dense' 
-        layer_target = model.get_layer(name=layer_name)
-        activation_model = tf.keras.models.Model(inputs=model.input, outputs=layer_target.output)
-        # model returns the probability for each outcome class as a value between 0 and 1
-        activations = activation_model.predict(the_img_arr)
-        print(activations)
-        
-#        score = model.evaluate(the_img_arr, the_lbl_arr, verbose=2)     # pass the image into the trained network, and check the score
         prediction = model.predict(the_img_arr)     
         out_lbl = np.argmax(prediction)
 
         if (the_lbl == out_lbl):
-            print("PASS: batch_idx=%d, idx=%d, true_label=%d, out_lbl=%d\n" % (batch_idx, idx, the_lbl, out_lbl))
+            sys.stdout.write("PASS: batch_idx=%d, idx=%d, true_label=%d, out_lbl=%d\n" % (batch_idx, idx, the_lbl, out_lbl))
         else:
             sys.stdout.write("FAIL: batch_idx=%d, idx=%d, true_label=%d, out_lbl=%d\n" % (batch_idx, idx, the_lbl, out_lbl))
             print(prediction)

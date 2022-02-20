@@ -103,7 +103,7 @@ checkpoint_callback = ModelCheckpoint(
 model.fit(
     train_ds,
     validation_data=val_ds,
-    epochs=5,
+    epochs=1,
     callbacks=[checkpoint_callback],
     verbose=2
 )
