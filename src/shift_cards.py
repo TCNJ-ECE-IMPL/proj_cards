@@ -110,7 +110,7 @@ for suit_num in range(4):           # step through the 4 suits
                 blank_im[H_start:H_end,W_start:W_end]=im_ZI[HC_start:HC_end,WC_start:WC_end]
 
                 #write file with movement and zoom included
-                filename="card_%s_%s_%03d_deg_%s_%s.png" % (suit,val_str,angle,h_str+"_"+v_str,'ZOOM125%')
+                filename="card_%s_%s_%03d_deg_%s_%s.png" % (suit,val_str,angle,h_str+"_"+v_str,'ZOOM1.25')
                 cv2.imwrite(os.path.join(dirname,filename),blank_im)
                 blank_im=np.zeros((W,H,4), np.uint8) #new blank image
 
@@ -160,6 +160,6 @@ for suit_num in range(4):           # step through the 4 suits
                     #Copy the zoomed out image into a blank composite
                     blank_im[DiffH-1+H_shift:H-1-DiffH+H_shift,DiffW-1+W_shift:(W-1-DiffW+W_shift)]=im_ZO[:,:]
                     #write file with movement and zoom included
-                    filename="card_%s_%s_%03d_deg_%s_%s.png" % (suit,val_str,angle,h_str+"_"+v_str,'ZOOM75%')
+                    filename="card_%s_%s_%03d_deg_%s_%s.png" % (suit,val_str,angle,h_str+"_"+v_str,'ZOOM.75')
                     cv2.imwrite(os.path.join(dirname,filename),blank_im)
                     blank_im=np.zeros((W,H,4), np.uint8) #new blank image
