@@ -18,7 +18,7 @@ for suit_num in range(4):           # step through the 4 suits
     for val in range(13):           # step through each card value
                                     # for numbered cards, the index 'val' is one less than a card's value
                                     # 0 -> Ace, 10 -> Jack, 11 -> Queen, 12 -> King
-        for angle in range(180):     
+        for angle in range(0,180,4):     
             if val == 0:
                 val_str = 'a'
             elif val == 10:
@@ -41,227 +41,125 @@ for suit_num in range(4):           # step through the 4 suits
    
             scale=1.25
 
+            dirname="/home/leopole1/proj_cards/augment_card/cardval_%s" % (val_str)
+
+            if not os.path.exists(dirname):
+                os.makedirs(dirname)
+
 #zoom in
-   
+             #resize the image by scaling, extract dimensions of larger image
             im_ZI=cv2.resize(im, None, fx=scale, fy=scale, interpolation=cv2.INTER_LINEAR)
             (New_H,New_W,dim)=np.shape(im_ZI)
 
-            cutH=int(.5*(New_H-H))
-            cutW=int(.5*(New_W-W))
+            cutH=int(0.5*(New_H-H)) #Section between image we want and image of larger size. 
+            cutW=int(0.5*(New_W-W)) #The difference is halved as we want to cut off each side one by one.
         
-
-            im_ZI=np.delete(im_ZI,slice(0,cutW,1),axis=1)
-            im_ZI=np.delete(im_ZI,slice(W,New_W,1),axis=1)
-            im_ZI=np.delete(im_ZI,slice(0,cutH,1),axis=0)
-            im_ZI=np.delete(im_ZI,slice(H,New_H,1),axis=0) #slice bottom
-         
-
-         
-   
-            shift=20
-
-
-            #right
-            blank_im[:, shift:W-1]=im_ZI[:,0:W-shift-1]
             
-
-
-            filename="card_%s_%s_%03d_deg_%s_%s.png" % (suit,val_str,angle,'hr_vc','ZOOM125%')
-            cv2.imwrite(filename,blank_im)
-            blank_im=np.zeros((W,H,4), np.uint8) #new blank image
-           
-
-           #up 
-            blank_im[0:H-1-shift,:]=im_ZI[shift:H-1 ,:]
-           
-
-            filename="card_%s_%s_%03d_deg_%s_%s.png" % (suit,val_str,angle,'hc_vu','ZOOM125%')
-            cv2.imwrite(filename,blank_im)
-            blank_im=np.zeros((W,H,4), np.uint8) #new blank image
-
-           #center
-            filename="card_%s_%s_%03d_deg_%s_%s.png" % (suit,val_str,angle,'hc_vc','ZOOM125%')
-            cv2.imwrite(filename,im_ZI)
-
-
-         
-           #left
-
-            blank_im[:,0:W-1-shift]=im_ZI[:,shift:W-1]
-
-
-            filename="card_%s_%s_%03d_deg_%s_%s.png" % (suit,val_str,angle,'hl_vc','ZOOM125%')
-            cv2.imwrite(filename,blank_im)
-            blank_im=np.zeros((W,H,4), np.uint8)
-
-
-
-            #down
-            blank_im[shift:H-1,:]=im_ZI[0:H-1-shift, :]
-
-
-
-            filename="card_%s_%s_%03d_deg_%s_%s.png" % (suit,val_str,angle,'hc_vd','ZOOM125%')
-            cv2.imwrite(filename,blank_im)
-            blank_im=np.zeros((W,H,4), np.uint8)
+            #remove sections of the 
+            im_ZI=np.delete(im_ZI,slice(0,cutW,1),axis=1) #left side
+            im_ZI=np.delete(im_ZI,slice(W,New_W,1),axis=1) #right side
+            im_ZI=np.delete(im_ZI,slice(0,cutH,1),axis=0) #top
+            im_ZI=np.delete(im_ZI,slice(H,New_H,1),axis=0) #bottom
          
 
-           #up right
-            blank_im[0:H-shift-1:,shift:W-1]=im_ZI[shift:H-1,:W-shift-1]
+         
+
+            shift=20   
+            #iterate through the nine possible values and copy the array depending on direction horizontally and vertically
+   
+            h_labels=("hl","hc","hr")
+            v_labels=("vu","vc","vd")
+
+            for h in range(3):
+                h_str=h_labels[h]
+                if h==0:
+                    W_start=0   #Detirmine start and end values to copy im_ZI into a blank composite
+                    W_end=W-1-shift
+                    WC_start=shift
+                    WC_end=W-1
+                elif h == 1:
+                    W_start=0
+                    W_end=W-1
+                    WC_start=0
+                    WC_end=W-1
+                else: #h=2
+                    W_start=shift
+                    W_end=W-1
+                    WC_start=0
+                    WC_end=W-1-shift
+
+                for v in range(3) :
+                    v_str=v_labels[v]
+
+                    if v == 0:
+                        H_start=0
+                        H_end=H-1-shift
+                        HC_start=shift
+                        HC_end=H-1
+                    elif v == 1:
+                        H_start=0
+                        H_end=H-1
+                        HC_start=0
+                        HC_end=H-1
+                    else :
+                        H_start=shift
+                        H_end=H-1
+                        HC_start=0
+                        HC_end=H-1-shift
+
+                blank_im[H_start:H_end,W_start:W_end]=im_ZI[HC_start:HC_end,WC_start:WC_end]
+
+                #write file with movement and zoom included
+                filename="card_%s_%s_%03d_deg_%s_%s.png" % (suit,val_str,angle,h_str+"_"+v_str,'ZOOM125%')
+                cv2.imwrite(os.path.join(dirname,filename),blank_im)
+                blank_im=np.zeros((W,H,4), np.uint8) #new blank image
 
 
+             
 
-            filename="card_%s_%s_%03d_deg_%s_%s.png" % (suit,val_str,angle,'hr_vu','ZOOM125%')
-            cv2.imwrite(filename,blank_im)
-            blank_im=np.zeros((W,H,4), np.uint8)
-
-
-           #down right
-            blank_im[shift:H-1,shift:W-1]=im_ZI[0:H-shift-1,0:W-shift-1]
-
-
-
-            filename="card_%s_%s_%03d_deg_%s_%s.png" % (suit,val_str,angle,'hr_vd','ZOOM125%')
-            cv2.imwrite(filename,blank_im)
-            blank_im=np.zeros((W,H,4), np.uint8)
-
-
-
-           #up left
-            blank_im[0:H-1-shift,0:W-1-shift]=im_ZI[shift:H-1 , shift:W-1]
-
-
-
-
-
-            filename="card_%s_%s_%03d_deg_%s_%s.png" % (suit,val_str,angle,'hl_vu','ZOOM125%')
-            cv2.imwrite(filename,blank_im)
-            blank_im=np.zeros((W,H,4), np.uint8)
-
-          
-            #down left
-            blank_im[shift:H-1,0:W-1-shift]=im_ZI[0:H-1-shift,shift:W-1]
-
-
-            filename="card_%s_%s_%03d_deg_%s_%s.png" % (suit,val_str,angle,'hl_vd','ZOOM125%')
-            cv2.imwrite(filename,blank_im)
-            blank_im=np.zeros((W,H,4), np.uint8)
-
+           
             
 
 
         #zoom out 
             scale=.75
           
-            im_ZO=cv2.resize(im, None, fx=scale, fy=scale, interpolation=cv2.INTER_LINEAR)
-            (New_H,New_W,dim)=np.shape(im_ZO)
+            im_ZO=cv2.resize(im, None, fx=scale, fy=scale, interpolation=cv2.INTER_LINEAR) #Zoom out using resize
+            (New_H,New_W,dim)=np.shape(im_ZO)   #get dimensions of new image
             
-            #Isolate the card
+            
          
            
 
-            DiffW=int(.5*(W-New_W))
-            DiffH=int(.5*(H-New_H))
+            DiffW=int(.5*(W-New_W))  #detirmine defference between two images-Use 1/2 as we want to work with each side
+            DiffH=int(.5*(H-New_H)) 
 
 
- 
+            #Iterate through for loops for all possible direction combinations. 
+            W_shift=0
+            H_shift=0
 
-            blank_im[DiffH-1:H-1-DiffH,DiffW-1:(W-1-DiffW)]=im_ZO[:,:]
+            for h in range(3):
+                h_str=h_labels[h]
+                if h==0 :
+                    W_shift=-shift
+                elif h == 1:
+                    W_shift = 0
+                else:
+                    W_shift=shift
 
-         #center
-            blank_im[DiffH-1:H-1-DiffH,DiffW-1:(W-1-DiffW)]=im_ZO[:,:]
+                for v in range (3):
+                    v_str=v_labels[v]
+                    if h==0 :
+                        H_shift=-shift
+                    elif h == 1:
+                        H_shift = 0
+                    else:
+                        H_shift=shift
 
-            filename="card_%s_%s_%03d_deg_%s_%s.png" % (suit,val_str,angle,'hc_vc','ZOOM75%')
-            cv2.imwrite(filename,blank_im)
-            blank_im=np.zeros((W,H,4), np.uint8) #new blank image
-        
-
-         #move right   
-            blank_im[DiffH-1:H-1-DiffH,DiffW-1+shift:(W-1-DiffW+shift)]=im_ZO[:,:]
-
-
-
-            filename="card_%s_%s_%03d_deg_%s_%s.png" % (suit,val_str,angle,'hr_vc','ZOOM75%')
-            cv2.imwrite(filename,blank_im)
-            blank_im=np.zeros((W,H,4), np.uint8) #new blank image
-
-          #move left
-
-            blank_im[DiffH-1:H-1-DiffH,DiffW-1-shift:(W-1-DiffW-shift)]=im_ZO[:,:]
-
-
-            filename="card_%s_%s_%03d_deg_%s_%s.png" % (suit,val_str,angle,'hl_vc','ZOOM75%')
-            cv2.imwrite(filename,blank_im)
-            blank_im=np.zeros((W,H,4), np.uint8) #new blank image
-
-           #move up
-            blank_im[DiffH-1-shift:H-1-DiffH-shift,DiffW-1:(W-1-DiffW)]=im_ZO[:,:]
-           
-
-            filename="card_%s_%s_%03d_deg_%s_%s.png" % (suit,val_str,angle,'hc_vu','ZOOM75%')
-            cv2.imwrite(filename,blank_im)
-            blank_im=np.zeros((W,H,4), np.uint8) #new blank image
-
-           
-            #move down
-
-            blank_im[DiffH-1+shift:H-1-DiffH+shift,DiffW-1:(W-1-DiffW)]=im_ZO[:,:]
-
-
-            filename="card_%s_%s_%03d_deg_%s_%s.png" % (suit,val_str,angle,'hc_vd','ZOOM75%')
-            cv2.imwrite(filename,blank_im)
-            blank_im=np.zeros((W,H,4), np.uint8) #new blank image
-
-            #up right
-            blank_im[DiffH-1-shift:H-1-DiffH-shift,DiffW-1+shift:(W-1-DiffW+shift)]=im_ZO[:,:]
-
-            filename="card_%s_%s_%03d_deg_%s_%s.png" % (suit,val_str,angle,'hr_vu','ZOOM75%')
-            cv2.imwrite(filename,blank_im)
-            blank_im=np.zeros((W,H,4), np.uint8) #new blank image
-
-            #up left 
-            blank_im[DiffH-1-shift:H-1-DiffH-shift,DiffW-1-shift:(W-1-DiffW-shift)]=im_ZO[:,:]
-
-            filename="card_%s_%s_%03d_deg_%s_%s.png" % (suit,val_str,angle,'hl_vu','ZOOM75%')
-            cv2.imwrite(filename,blank_im)
-            blank_im=np.zeros((W,H,4), np.uint8) #new blank image
-
-            #down left
-            blank_im[DiffH-1+shift:H-1-DiffH+shift,DiffW-1-shift:(W-1-DiffW-shift)]=im_ZO[:,:]
-
-            filename="card_%s_%s_%03d_deg_%s_%s.png" % (suit,val_str,angle,'hl_vd','ZOOM75%')
-            cv2.imwrite(filename,blank_im)
-            blank_im=np.zeros((W,H,4), np.uint8) #new blank image
-
-            #down right
-            blank_im[DiffH-1+shift:H-1-DiffH+shift,DiffW-1+shift:(W-1-DiffW+shift)]=im_ZO[:,:]
-
-            filename="card_%s_%s_%03d_deg_%s_%s.png" % (suit,val_str,angle,'hr_vd','ZOOM75%')
-            cv2.imwrite(filename,blank_im)
-            blank_im=np.zeros((W,H,4), np.uint8) #new blank image
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+                    #Copy the zoomed out image into a blank composite
+                    blank_im[DiffH-1+H_shift:H-1-DiffH+H_shift,DiffW-1+W_shift:(W-1-DiffW+W_shift)]=im_ZO[:,:]
+                    #write file with movement and zoom included
+                    filename="card_%s_%s_%03d_deg_%s_%s.png" % (suit,val_str,angle,h_str+"_"+v_str,'ZOOM75%')
+                    cv2.imwrite(os.path.join(dirname,filename),blank_im)
+                    blank_im=np.zeros((W,H,4), np.uint8) #new blank image
