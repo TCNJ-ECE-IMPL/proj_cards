@@ -25,7 +25,7 @@ os.environ["CUDA_VISIBLE_DEVICES"] = '0'
 
 print("Tensorflow version is: ", tf.__version__)
 
-data_dir = pathlib.Path(r'/home/pearlstl/cards/source/as_images') # directory the images are in
+data_dir = pathlib.Path(r'/home/leopole1/proj_cards/augment_cards') # directory the images are in
 
 # Data parameters
 batch_size = 32
@@ -76,7 +76,7 @@ model = tf.keras.Sequential([
     tf.keras.layers.MaxPooling2D(),
     tf.keras.layers.Conv2D(32, 3, activation = 'relu'),
     tf.keras.layers.MaxPooling2D(),
-    tf.keras.layers.Conv2D(32, 3, activation = 'relu',name="blah"),
+    tf.keras.layers.Conv2D(32, 3, activation = 'relu'),
     tf.keras.layers.MaxPooling2D(),
     tf.keras.layers.Flatten(),
     tf.keras.layers.Dense(128, activation = 'relu'),
