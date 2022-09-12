@@ -55,7 +55,7 @@ for suit_num in range(4):           # step through the 4 suits
             cutW=int(0.5*(New_W-W)) #The difference is halved as we want to cut off each side one by one.
         
             
-            #remove sections of the 
+            #remove sections of the image, cropping it back down to its original sizeS
             im_ZI=np.delete(im_ZI,slice(0,cutW,1),axis=1) #left side
             im_ZI=np.delete(im_ZI,slice(W,New_W,1),axis=1) #right side
             im_ZI=np.delete(im_ZI,slice(0,cutH,1),axis=0) #top
