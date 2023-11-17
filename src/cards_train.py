@@ -25,7 +25,7 @@ os.environ["CUDA_VISIBLE_DEVICES"] = '0'
 
 print("Tensorflow version is: ", tf.__version__)
 
-data_dir = pathlib.Path(r'/home/leopole1/proj_cards/augment_cards') # directory the images are in
+data_dir = pathlib.Path(r'/home/leopole1/proj_cards/augmented_cards') # directory the images are in
 
 # Data parameters
 batch_size = 32
