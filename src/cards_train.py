@@ -88,11 +88,11 @@ model.summary()
 # Runs the model
 model.compile(
     optimizer='adam',
-    loss=tf.losses.SparseCategoricalCrossentropy(from_logits=True),
+    loss=tf.losses.SparseCategoricalCrossentropy(from_logits=False),
     metrics=['accuracy']
 )
 
-best_wgt_path = 'weights.h5'
+best_wgt_path = 'best.weights.h5'
 checkpoint_callback = ModelCheckpoint(
     filepath=best_wgt_path,
     save_weights_only=True,
